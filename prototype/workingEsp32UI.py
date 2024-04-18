@@ -15,9 +15,10 @@ class PeopleCounterApp(QMainWindow):
         # Laad de connectie met de ESP32
         self.ser = serial.Serial('COM5', 115200, timeout=1)
 
+        # Timer voor het periodiek lezen van de ESP32
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.readFromESP32)
-        self.timer.start(1000)
+        self.timer.start(1000)  # Lees elke 1 seconde
 
         self.initUI()
 
@@ -32,15 +33,10 @@ class PeopleCounterApp(QMainWindow):
         self.countLabel.setStyleSheet("color: #ff0000;")
         self.layout.addWidget(self.countLabel, alignment=Qt.AlignCenter)
 
-        self.incrementButton = QPushButton("Voeg persoon aan teller toe")
-        self.incrementButton.setStyleSheet("background-color: #ff0000; color: white; font-size: 16px; border-radius: 5px;")
-        self.incrementButton.clicked.connect(self.incrementCount)
-        self.layout.addWidget(self.incrementButton)
-
-        self.decrementButton = QPushButton("Haal persoon weg")
-        self.decrementButton.setStyleSheet("background-color: #ff0000; color: white; font-size: 16px; border-radius: 5px;")
-        self.decrementButton.clicked.connect(self.decrementCount)
-        self.layout.addWidget(self.decrementButton)
+        self.countValueLabel = QLabel("0")
+        self.countValueLabel.setFont(QFont("Arial", 20))
+        self.countValueLabel.setStyleSheet("color: #0000ff;")
+        self.layout.addWidget(self.countValueLabel, alignment=Qt.AlignCenter)
 
         self.centralWidget.setLayout(self.layout)
 
@@ -56,12 +52,18 @@ class PeopleCounterApp(QMainWindow):
 
     def incrementCount(self):
         self.countLabel.setText("Iemand is binnen gekomen")
+        self.updateCountLabel()
 
     def decrementCount(self):
         self.countLabel.setText("Iemand is vertrokken")
+        self.updateCountLabel()
 
     def updateCount(self, response):
         self.countLabel.setText(f"Totale mensen in zicht: {response}")
+        self.updateCountLabel()
+
+    def updateCountLabel(self):
+        self.countValueLabel.setText(f"{self.countLabel.text().split(': ')[-1]}")
 
     def closeEvent(self, event):
         self.timer.stop()
