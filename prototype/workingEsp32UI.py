@@ -2,7 +2,7 @@ import sys
 import serial
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget
 from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 class PeopleCounterApp(QMainWindow):
     def __init__(self):
@@ -14,6 +14,10 @@ class PeopleCounterApp(QMainWindow):
 
         # Laad de connectie met de ESP32
         self.ser = serial.Serial('COM5', 115200, timeout=1)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.readFromESP32)
+        self.timer.start(1000)
 
         self.initUI()
 
@@ -40,6 +44,11 @@ class PeopleCounterApp(QMainWindow):
 
         self.centralWidget.setLayout(self.layout)
 
+    def readFromESP32(self):
+        while self.ser.in_waiting:
+            response = self.ser.readline().decode('utf-8').strip()
+            self.updateCount(response)
+
     def incrementCount(self):
         self.ser.write(b'+')
         response = self.ser.readline().decode('utf-8').strip()
@@ -57,6 +66,7 @@ class PeopleCounterApp(QMainWindow):
             self.countLabel.setText(f"Totale mensen in zicht: {response}")
 
     def closeEvent(self, event):
+        self.timer.stop()
         self.ser.close()
         event.accept()
 

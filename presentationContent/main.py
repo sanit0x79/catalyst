@@ -3,7 +3,7 @@ import time
 
 # Initialiseren van de pins op de ESP32
 pirPlusPin = 23
-pirMinPin = 24      
+pirMinPin = 22
 
 # Initialiseren van de input die wij de sensoren geven
 pirPlus = machine.Pin(pirPlusPin, machine.Pin.IN)
@@ -16,7 +16,7 @@ mensenTal = 0
 binnenkomstStatus = 0
 verlaatStatus = 0
 
-        print("PiR sensor telt nu voor mensen, druk op Ctrl+C om het programma te verlaten")
+print("PiR sensor telt nu voor mensen, druk op Ctrl+C om het programma te verlaten")
 
 try:
     while True:
@@ -25,21 +25,20 @@ try:
         verlaatStatus = pirMin.value()
         
         # Update het aantal mensen door het bekijken van de voltages van de sensoren
-        if binnenkomstStatus == 1:
+        if binnenkomstStatus == 1 and verlaatStatus == 0:
             binnenkomstTal += 1
-            time.sleep(0.5) # Er is hier een delay toegevoegd om miscalculatie te voorkomen
-        elif verlaatStatus == 1:
-            if binnenkomstTal > 0:
-                binnenkomstTal -= 1
-            verlaatTal += 1
-            time.sleep(0.5) # Delay toegevoegd om miscalculatie te voorkomen
+            print("Er is iemand binnengekomen")
+            time.sleep(2) # Er is hier een delay toegevoegd om miscalculatie te voorkomen
+        elif verlaatStatus == 1 and binnenkomstTal > 0:
+            binnenkomstTal -= 1
+            time.sleep(2) # Delay toegevoegd om miscalculatie te voorkomen
 
-        mensenTal = binnenkomstTal - verlaatTal
+        mensenTal = binnenkomstTal
 
         print(f"Totale mensen in zicht: {mensenTal}")
         
         # Software wacht hier zeer kort om verkeerde detecties te voorkomen
-        time.sleep(0.1)
+        time.sleep(0.5)
 
 except KeyboardInterrupt:
     print("Programma wordt afgesloten")
