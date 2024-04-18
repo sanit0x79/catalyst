@@ -47,23 +47,21 @@ class PeopleCounterApp(QMainWindow):
     def readFromESP32(self):
         while self.ser.in_waiting:
             response = self.ser.readline().decode('utf-8').strip()
-            self.updateCount(response)
+            if response.startswith("+"):
+                self.incrementCount()
+            elif response.startswith("-"):
+                self.decrementCount()
+            else:
+                self.updateCount(response)
 
     def incrementCount(self):
-        self.ser.write(b'+')
-        response = self.ser.readline().decode('utf-8').strip()
-        self.updateCount(response)
+        self.countLabel.setText("Iemand is binnen gekomen")
 
     def decrementCount(self):
-        self.ser.write(b'-')
-        response = self.ser.readline().decode('utf-8').strip()
-        self.updateCount(response)
+        self.countLabel.setText("Iemand is vertrokken")
 
     def updateCount(self, response):
-        if response == '0':
-            self.countLabel.setText("Geen mensen in zicht")
-        else:
-            self.countLabel.setText(f"Totale mensen in zicht: {response}")
+        self.countLabel.setText(f"Totale mensen in zicht: {response}")
 
     def closeEvent(self, event):
         self.timer.stop()

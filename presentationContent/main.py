@@ -27,15 +27,16 @@ try:
         # Update het aantal mensen door het bekijken van de voltages van de sensoren
         if binnenkomstStatus == 1 and verlaatStatus == 0:
             binnenkomstTal += 1
-            print("Er is iemand binnengekomen")
+            print(f"+1")
             time.sleep(2) # Er is hier een delay toegevoegd om miscalculatie te voorkomen
         elif verlaatStatus == 1 and binnenkomstTal > 0:
             binnenkomstTal -= 1
+            print(f"-1")
             time.sleep(2) # Delay toegevoegd om miscalculatie te voorkomen
 
         mensenTal = binnenkomstTal
 
-        print(f"Totale mensen in zicht: {mensenTal}")
+        print(f"{mensenTal}\n")
         
         # Software wacht hier zeer kort om verkeerde detecties te voorkomen
         time.sleep(0.5)
