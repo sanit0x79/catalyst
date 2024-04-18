@@ -15,6 +15,9 @@ class PeopleCounterApp(QMainWindow):
         # Laad de connectie met de ESP32
         self.ser = serial.Serial('COM5', 115200, timeout=1)
 
+        # Variabele voor de tellerwaarde
+        self.countValue = 0
+
         # Timer voor het periodiek lezen van de ESP32
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.readFromESP32)
@@ -52,18 +55,22 @@ class PeopleCounterApp(QMainWindow):
 
     def incrementCount(self):
         self.countLabel.setText("Iemand is binnen gekomen")
+        self.countValue += 1
         self.updateCountLabel()
 
     def decrementCount(self):
         self.countLabel.setText("Iemand is vertrokken")
+        if self.countValue > 0:
+            self.countValue -= 1
         self.updateCountLabel()
 
     def updateCount(self, response):
         self.countLabel.setText(f"Totale mensen in zicht: {response}")
+        self.countValue = int(response)
         self.updateCountLabel()
 
     def updateCountLabel(self):
-        self.countValueLabel.setText(f"{self.countLabel.text().split(': ')[-1]}")
+        self.countValueLabel.setText(str(self.countValue))
 
     def closeEvent(self, event):
         self.timer.stop()
