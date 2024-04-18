@@ -66,8 +66,13 @@ class PeopleCounterApp(QMainWindow):
 
     def updateCount(self, response):
         self.countLabel.setText(f"Totale mensen in zicht: {response}")
-        self.countValue = int(response)
+        try:
+            self.countValue = int(response.strip())
+        except ValueError:
+            print(f"Ongeldige waarde ontvangen van ESP32: {response}")
+            self.countValue = 0
         self.updateCountLabel()
+
 
     def updateCountLabel(self):
         self.countValueLabel.setText(str(self.countValue))
