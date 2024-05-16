@@ -15,7 +15,7 @@ tof2 = VL53L0X.VL53L0X(i2c2)
 tof2.start()
 
 peopleCount = 0
-thresholdDistance = 350  
+thresholdDistance = 350
 sensor1Triggered = False
 sensor2Triggered = False
 debounceTime = 0.4
