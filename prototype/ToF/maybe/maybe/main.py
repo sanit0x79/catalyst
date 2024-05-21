@@ -25,8 +25,9 @@ sensor2Triggered = False
 debounceTime = 0.2
 
 # Connect to Wi-Fi
+
 def connect_wifi(SSID, PASSWORD):
-    wlan = network.WLAN(network.STA_IF)
+wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
     
@@ -45,6 +46,7 @@ def connect_wifi(SSID, PASSWORD):
         print('Failed to connect to Wi-Fi')
         return None
 
+
 ip_address = connect_wifi(SSID, PASSWORD)
 if ip_address:
     print('ESP32 IP Address:', ip_address)
@@ -60,6 +62,7 @@ s.bind(addr)
 s.listen(1)
 
 print('Listening on', addr)
+
 
 def web_page():
     global peopleCount, sensor1Triggered, sensor2Triggered
@@ -93,6 +96,7 @@ def web_page():
 
     response = ujson.dumps({'count': peopleCount})
     return response
+
 
 while True:
     try:
