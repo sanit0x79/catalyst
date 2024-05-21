@@ -24,6 +24,8 @@ sensor2Triggered = False
 debounceTime = 0.4
 
 # Connect to Wi-Fi
+
+
 def connect_wifi(ssid, password):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -35,6 +37,7 @@ def connect_wifi(ssid, password):
     print('Network config:', wlan.ifconfig())
     return wlan.ifconfig()[0]
 
+
 ip_address = connect_wifi(SSID, PASSWORD)
 
 # Web server setup
@@ -44,6 +47,7 @@ s.bind(addr)
 s.listen(1)
 
 print('Listening on', addr)
+
 
 def web_page():
     global peopleCount, sensor1Triggered, sensor2Triggered
@@ -73,6 +77,7 @@ def web_page():
 
     response = ujson.dumps({'count': peopleCount})
     return response
+
 
 while True:
     cl, addr = s.accept()
