@@ -22,19 +22,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function updateRoomCounts() {
-        // Simulatie
-        const roomACount = Math.floor(Math.random() * 20);
-        const roomBCount = Math.floor(Math.random() * 20);
-
-        document.getElementById('roomA-count').textContent = roomACount;
-        document.getElementById('roomB-count').textContent = roomBCount;
-
-        return roomACount + roomBCount;
+    async function fetchOccupancyData() {
+        try {
+            const response = await fetch('http://<ESP32_IP_ADDRESS>/');
+            const data = await response.json();
+            return data.count;
+        } catch (error) {
+            console.error('Error fetching occupancy data:', error);
+        }
     }
 
-    function updateTotalOccupancy() {
-        const total = updateRoomCounts();
+    async function updateTotalOccupancy() {
+        const total = await fetchOccupancyData();
         const now = new Date();
         const timeLabel = `${now.getHours()}:${now.getMinutes()}`;
 
@@ -49,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
         totalOccupancyChart.update();
     }
 
-    // Elke 5 seconden bijwerken
+    // Update every 5 seconds
     updateTotalOccupancy();
     setInterval(updateTotalOccupancy, 5000);
 });
