@@ -27,7 +27,7 @@ debounceTime = 0.2
 # Connect to Wi-Fi
 
 def connect_wifi(SSID, PASSWORD):
-wlan = network.WLAN(network.STA_IF)
+    wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
     
