@@ -26,18 +26,19 @@ debounceTime = 0.2
 
 # Connect to Wi-Fi
 
+
 def connect_wifi(SSID, PASSWORD):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
-    
+
     timeout = 25  # 10 seconds timeout
     while not wlan.isconnected() and timeout > 0:
         time.sleep(1)
         timeout -= 1
         print('Connecting to Wi-Fi...')
         print(f'Status: {wlan.status()}')  # Print the status
-    
+
     if wlan.isconnected():
         print('Connected to Wi-Fi')
         print('Network config:', wlan.ifconfig())
@@ -86,10 +87,12 @@ def web_page():
                 sensor1Triggered = False  # Reset sensor 1
                 print(f"Someone Entered the room: {peopleCount}")
 
-    if not (distance1 < thresholdDistance) and sensor1Triggered and not sensor2Triggered:
+    if not (distance1 < thresholdDistance) and sensor1Triggered and not\
+            sensor2Triggered:
         sensor1Triggered = False
 
-    if not (distance2 < thresholdDistance) and sensor2Triggered and not sensor1Triggered:
+    if not (distance2 < thresholdDistance) and sensor2Triggered and not\
+            sensor1Triggered:
         sensor2Triggered = False
 
     print(f"People count: {peopleCount}")
@@ -101,13 +104,15 @@ def web_page():
 while True:
     try:
         cl, addr = s.accept()
-       # print('Client connected from', addr)
+        # print('Client connected from', addr)
         request = cl.recv(1024)
         request = str(request)
-        #print('Content = %s' % request)
+        # print('Content = %s' % request)
 
         response = web_page()
-        cl.send('HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n')
+        cl.send(
+            'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\
+             Access-Control-Allow-Origin: *\r\n\r\n')
         cl.send(response)
         cl.close()
     except Exception as e:
