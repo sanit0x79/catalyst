@@ -25,14 +25,9 @@ sensor2Triggered = False
 debounceTime = 0.2
 
 # Connect to Wi-Fi
-<<<<<<< HEAD
 
-
-def connect_wifi(ssid, password):
-=======
 def connect_wifi(SSID, PASSWORD):
->>>>>>> 34bc057576e4934dd89676883c681a0f90a12bdd
-    wlan = network.WLAN(network.STA_IF)
+wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
     
