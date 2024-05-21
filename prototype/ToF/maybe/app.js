@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchOccupancyData() {
         try {
-            const response = await fetch('http://192.168.178.26/');
+            const response = await fetch('http://192.168.88.109/');
             const data = await response.json();
             console.log('Data:', data);
             updateCount(data.count);

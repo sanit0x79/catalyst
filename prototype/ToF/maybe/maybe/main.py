@@ -6,8 +6,8 @@ from VL53L0X import *
 import socket
 
 # Wi-Fi credentials
-SSID = 'Ziggo0414332'
-PASSWORD = 'zJ7chAxakmp3'
+SSID = 'pixel1234'
+PASSWORD = 'test1234'
 
 # Initialize the sensors
 i2c1 = I2C(scl=Pin(22), sda=Pin(21))
@@ -30,7 +30,7 @@ def connect_wifi(SSID, PASSWORD):
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
     
-    timeout = 10  # 10 seconds timeout
+    timeout = 25  # 10 seconds timeout
     while not wlan.isconnected() and timeout > 0:
         time.sleep(1)
         timeout -= 1
