@@ -22,13 +22,17 @@ def tcp_server():
     while True:
         client, addr = sock.accept()
         print('Connected by', addr)
+        buffer = ''
         while True:
             try:
                 recv_data = client.recv(1024)
                 if not recv_data:
                     break
-                data = json.loads(recv_data.decode())
-                print(f"Received data: {data}")
+                buffer += recv_data.decode()
+                while '\n' in buffer:
+                    line, buffer = buffer.split('\n', 1)
+                    data = json.loads(line)
+                    print(f"Received data: {data}")
             except Exception as e:
                 print(f"Error receiving data: {e}")
                 break
