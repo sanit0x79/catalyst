@@ -10,6 +10,8 @@ SSID = 'pixel1234'
 PASSWORD = 'test1234'
 
 # Initialize the sensors
+
+
 def initialize_sensor(i2c, retries=3):
     sensor = None
     for attempt in range(retries):
@@ -24,6 +26,7 @@ def initialize_sensor(i2c, retries=3):
             time.sleep(1)
     return sensor
 
+
 i2c1 = I2C(scl=Pin(22), sda=Pin(21))
 tof1 = initialize_sensor(i2c1)
 
@@ -37,6 +40,8 @@ sensor2Triggered = False
 debounceTime = 1
 
 # Connect to Wi-Fi
+
+
 def connect_wifi(SSID, PASSWORD):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -57,6 +62,7 @@ def connect_wifi(SSID, PASSWORD):
         print('Failed to connect to Wi-Fi')
         return None
 
+
 ip_address = connect_wifi(SSID, PASSWORD)
 if ip_address:
     print('ESP32 IP Address:', ip_address)
@@ -65,7 +71,7 @@ else:
     raise Exception("Failed to connect to Wi-Fi")
 
 # Server setup to send data to the laptop
-server_ip = '192.168.241.39'  # Change this to your laptop's IP address
+server_ip = '192.168.241.39'
 server_port = 8080
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
@@ -75,19 +81,21 @@ except Exception as e:
     print(f"Failed to connect to laptop server: {e}")
     raise
 
+
 def read_sensors():
     global peopleCount, sensor1Triggered, sensor2Triggered
     try:
         if tof1 is None or tof2 is None:
             raise Exception("Sensors not initialized")
-        
+
         distance1 = tof1.read()
         distance2 = tof2.read()
-        
+
         if distance1 is None or distance2 is None:
             raise ValueError("Sensor reading is None")
 
-        print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {distance2}, {peopleCount}")
+        print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {
+              distance2}, {peopleCount}")
 
         current_time = time.time()
 
@@ -113,18 +121,21 @@ def read_sensors():
         if not (distance2 < thresholdDistance) and sensor2Triggered and not sensor1Triggered:
             sensor2Triggered = False
 
-        data = {'distance1': distance1, 'distance2': distance2, 'count': peopleCount}
-        return ujson.dumps(data) + '\n'  # Add a newline character as a delimiter
+        data = {'distance1': distance1,
+                'distance2': distance2, 'count': peopleCount}
+        # Add a newline character as a delimiter
+        return ujson.dumps(data) + '\n'
     except Exception as e:
         print(f"Error reading sensors: {e}")
         return ujson.dumps({'error': str(e)}) + '\n'
+
 
 last_sensor_read_time = time.time()
 sensor_read_interval = 0.1  # Read sensors every 0.1 seconds
 
 while True:
     current_time = time.time()
-    
+
     if current_time - last_sensor_read_time >= sensor_read_interval:
         sensor_data = read_sensors()
         try:
