@@ -25,6 +25,8 @@ sensor2Triggered = False
 debounceTime = 0.2
 
 # Connect to Wi-Fi
+
+
 def connect_wifi(SSID, PASSWORD):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -45,6 +47,7 @@ def connect_wifi(SSID, PASSWORD):
         print('Failed to connect to Wi-Fi')
         return None
 
+
 ip_address = connect_wifi(SSID, PASSWORD)
 if ip_address:
     print('ESP32 IP Address:', ip_address)
@@ -61,10 +64,12 @@ s.listen(1)
 
 print('Listening on', addr)
 
+
 def web_page():
     global peopleCount, sensor1Triggered, sensor2Triggered
     response = ujson.dumps({'count': peopleCount})
     return response
+
 
 def read_sensors():
     global peopleCount, sensor1Triggered, sensor2Triggered
@@ -95,6 +100,7 @@ def read_sensors():
     except Exception as e:
         print(f"Error reading sensors: {e}")
 
+
 last_sensor_read_time = time.time()
 last_print_time = time.time()
 sensor_read_interval = 0.1  # Read sensors every 0.1 seconds
@@ -102,30 +108,32 @@ print_interval = 5  # Print every 5 seconds
 
 while True:
     current_time = time.time()
-    
+
     # Read sensors at specified intervals
     if current_time - last_sensor_read_time >= sensor_read_interval:
         read_sensors()
         last_sensor_read_time = current_time
-    
+
     # Print sensor data and people count every 5 seconds
     if current_time - last_print_time >= print_interval:
         try:
             distance1 = tof1.read()
             distance2 = tof2.read()
-            print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {distance2}")
+            print(f"Sensor1 Distance: {
+                  distance1}, Sensor2 Distance: {distance2}")
             print(f"Current People Count: {peopleCount}")
             last_print_time = current_time
         except Exception as e:
             print(f"Error during print: {e}")
-    
+
     try:
         cl, addr = s.accept()
         request = cl.recv(1024)
         request = str(request)
 
         response = web_page()
-        cl.send('HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n')
+        cl.send(
+            'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n')
         cl.send(response)
         cl.close()
     except Exception as e:
