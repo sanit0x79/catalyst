@@ -1,13 +1,6 @@
-import network
 import time
 from machine import Pin, I2C
-import ujson
 from VL53L0X import *
-import socket
-
-# Wi-Fi credentials
-SSID = 'pixel1234'
-PASSWORD = 'test1234'
 
 # Initialize the sensors
 i2c1 = I2C(scl=Pin(22), sda=Pin(21))
@@ -20,107 +13,93 @@ tof2.start()
 
 # Variables
 peopleCount = 0
-thresholdDistance = 750  # Adjusted for door height
+thresholdDistance = 1500  # Adjust based on environment
+debounce_time = 0.179  # Debounce time in seconds based on sensor distance and average walking speed
 sensor_matrix = [[0, 0], [0, 0]]  # Matrix to track sensor states [Previous, Current]
-
-# Connect to Wi-Fi
-def connect_wifi(SSID, PASSWORD):
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(SSID, PASSWORD)
-
-    timeout = 20  # 20 seconds timeout
-    while not wlan.isconnected() and timeout > 0:
-        time.sleep(1)
-        timeout -= 1
-        print('Connecting to Wi-Fi...')
-        print(f'Status: {wlan.status()}')
-
-    if wlan.isconnected():
-        print('Connected to Wi-Fi')
-        print('Network config:', wlan.ifconfig())
-        return wlan.ifconfig()[0]
-    else:
-        print('Failed to connect to Wi-Fi')
-        return None
-
-ip_address = connect_wifi(SSID, PASSWORD)
-if ip_address:
-    print('ESP32 IP Address:', ip_address)
-else:
-    print('Failed to connect to Wi-Fi.')
-    raise Exception("Failed to connect to Wi-Fi")
-
-# Web server setup
-addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-s = socket.socket()
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind(addr)
-s.listen(1)
-
-print('Listening on', addr)
-
-def web_page():
-    global peopleCount
-    response = ujson.dumps({'count': peopleCount})
-    return response
+last_trigger_time = [0, 0]  # Timestamps of last trigger for each sensor
+entry_detected = False  # Flag for entry detection
+exit_detected = False  # Flag for exit detection
 
 def read_sensors():
-    global peopleCount, sensor_matrix
+    global peopleCount, sensor_matrix, last_trigger_time, entry_detected, exit_detected
+    current_time = time.time()
+
     try:
         distance1 = tof1.read()
         distance2 = tof2.read()
 
         # Debug output for continuous reading
-        print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {distance2}")
+        print(f"[DEBUG] Sensor1 Distance: {distance1}, Sensor2 Distance: {distance2}")
 
-        # Update matrix
-        sensor_matrix[0][0] = sensor_matrix[0][1]
-        sensor_matrix[1][0] = sensor_matrix[1][1]
-        
-        sensor_matrix[0][1] = distance1 < thresholdDistance
-        sensor_matrix[1][1] = distance2 < thresholdDistance
+        # Update matrix with debounce logic for Sensor 1
+        if distance1 < thresholdDistance:
+            if (current_time - last_trigger_time[0]) > debounce_time:
+                sensor_matrix[0][0] = sensor_matrix[0][1]  # Previous state
+                sensor_matrix[0][1] = 1  # Current state
+                last_trigger_time[0] = current_time
+                print("[DEBUG] Sensor 1 triggered, updating state to 1")
+        else:
+            sensor_matrix[0][1] = 0
+            print("[DEBUG] Sensor 1 not triggered, updating state to 0")
 
-        # Detect people passing through based on sensor order
+        # Update matrix with debounce logic for Sensor 2
+        if distance2 < thresholdDistance:
+            if (current_time - last_trigger_time[1]) > debounce_time:
+                sensor_matrix[1][0] = sensor_matrix[1][1]  # Previous state
+                sensor_matrix[1][1] = 1  # Current state
+                last_trigger_time[1] = current_time
+                print("[DEBUG] Sensor 2 triggered, updating state to 1")
+        else:
+            sensor_matrix[1][1] = 0
+            print("[DEBUG] Sensor 2 not triggered, updating state to 0")
+
+        # Detect entry
         if sensor_matrix[0][0] == 0 and sensor_matrix[0][1] == 1:
-            if sensor_matrix[1][0] == 1:
+            # Sensor 1 triggered first
+            if sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1 and not entry_detected:
                 peopleCount += 1
                 print("Iemand is de ruimte binnengekomen. Huidige telling:", peopleCount)
+                entry_detected = True
+                exit_detected = False  # Reset exit detection flag
 
+        # Detect exit
         if sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1:
-            if sensor_matrix[0][0] == 1:
+            # Sensor 2 triggered first
+            if sensor_matrix[0][0] == 0 and sensor_matrix[0][1] == 1 and not exit_detected:
                 peopleCount -= 1
                 print("Iemand heeft de ruimte verlaten. Huidige telling:", peopleCount)
+                exit_detected = True
+                entry_detected = False  # Reset entry detection flag
+
+        # Reset flags and matrix if both sensors are no longer triggered
+        if sensor_matrix[0][1] == 0 and sensor_matrix[1][1] == 0:
+            entry_detected = False
+            exit_detected = False
+            sensor_matrix[0][0] = 0
+            sensor_matrix[1][0] = 0
+            print("[DEBUG] Both sensors reset")
 
     except Exception as e:
         print(f"Error reading sensors: {e}")
 
 # Initialize sensor states to avoid initial miscounts
 def initialize_sensors():
+    global sensor_matrix, last_trigger_time
     try:
         sensor_matrix[0][1] = tof1.read() < thresholdDistance
         sensor_matrix[1][1] = tof2.read() < thresholdDistance
         sensor_matrix[0][0] = sensor_matrix[0][1]
         sensor_matrix[1][0] = sensor_matrix[1][1]
+        last_trigger_time[0] = time.time()
+        last_trigger_time[1] = time.time()
+        print("[DEBUG] Sensors initialized")
     except Exception as e:
         print(f"Error initializing sensors: {e}")
 
+# Initialize sensors
 initialize_sensors()
 
+# Main loop
 while True:
     read_sensors()
-
-    try:
-        cl, addr = s.accept()
-        request = cl.recv(1024)
-        request = str(request)
-
-        response = web_page()
-        cl.send(
-            'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n')
-        cl.send(response)
-        cl.close()
-    except Exception as e:
-        print(f'Error: {e}')
-        if cl:
-            cl.close()
+    time.sleep(0.1)  # Small delay to prevent overwhelming the sensor reads
