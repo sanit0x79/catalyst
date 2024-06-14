@@ -20,7 +20,7 @@ tof2.start()
 
 # Variables
 peopleCount = 0
-thresholdDistance = 750
+thresholdDistance = 750  # Adjusted for door height
 sensor_matrix = [[0, 0], [0, 0]]  # Matrix to track sensor states [Previous, Current]
 
 # Connect to Wi-Fi
@@ -71,6 +71,9 @@ def read_sensors():
         distance1 = tof1.read()
         distance2 = tof2.read()
 
+        # Debug output for continuous reading
+        print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {distance2}")
+
         # Update matrix
         sensor_matrix[0][0] = sensor_matrix[0][1]
         sensor_matrix[1][0] = sensor_matrix[1][1]
@@ -78,19 +81,31 @@ def read_sensors():
         sensor_matrix[0][1] = distance1 < thresholdDistance
         sensor_matrix[1][1] = distance2 < thresholdDistance
 
-        # Detect people passing through
+        # Detect people passing through based on sensor order
         if sensor_matrix[0][0] == 0 and sensor_matrix[0][1] == 1:
-            if sensor_matrix[1][1] == 1:
-                peopleCount -= 1
-                print("Iemand heeft de ruimte verlaten. Huidige telling:", peopleCount)
-
-        if sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1:
-            if sensor_matrix[0][1] == 1:
+            if sensor_matrix[1][0] == 1:
                 peopleCount += 1
                 print("Iemand is de ruimte binnengekomen. Huidige telling:", peopleCount)
 
+        if sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1:
+            if sensor_matrix[0][0] == 1:
+                peopleCount -= 1
+                print("Iemand heeft de ruimte verlaten. Huidige telling:", peopleCount)
+
     except Exception as e:
         print(f"Error reading sensors: {e}")
+
+# Initialize sensor states to avoid initial miscounts
+def initialize_sensors():
+    try:
+        sensor_matrix[0][1] = tof1.read() < thresholdDistance
+        sensor_matrix[1][1] = tof2.read() < thresholdDistance
+        sensor_matrix[0][0] = sensor_matrix[0][1]
+        sensor_matrix[1][0] = sensor_matrix[1][1]
+    except Exception as e:
+        print(f"Error initializing sensors: {e}")
+
+initialize_sensors()
 
 while True:
     read_sensors()
