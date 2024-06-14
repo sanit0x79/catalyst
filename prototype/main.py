@@ -18,26 +18,23 @@ i2c2 = I2C(scl=Pin(19), sda=Pin(18))
 tof2 = VL53L0X(i2c2)
 tof2.start()
 
+# Variables
 peopleCount = 0
 thresholdDistance = 750
-sensor1Triggered = False
-sensor2Triggered = False
-debounceTime = 0.2
+sensor_matrix = [[0, 0], [0, 0]]  # Matrix to track sensor states [Previous, Current]
 
 # Connect to Wi-Fi
-
-
 def connect_wifi(SSID, PASSWORD):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
 
-    timeout = 20  # 10 seconds timeout
+    timeout = 20  # 20 seconds timeout
     while not wlan.isconnected() and timeout > 0:
         time.sleep(1)
         timeout -= 1
         print('Connecting to Wi-Fi...')
-        print(f'Status: {wlan.status()}')  # Print the status
+        print(f'Status: {wlan.status()}')
 
     if wlan.isconnected():
         print('Connected to Wi-Fi')
@@ -46,7 +43,6 @@ def connect_wifi(SSID, PASSWORD):
     else:
         print('Failed to connect to Wi-Fi')
         return None
-
 
 ip_address = connect_wifi(SSID, PASSWORD)
 if ip_address:
@@ -64,67 +60,38 @@ s.listen(1)
 
 print('Listening on', addr)
 
-
 def web_page():
-    global peopleCount, sensor1Triggered, sensor2Triggered
+    global peopleCount
     response = ujson.dumps({'count': peopleCount})
     return response
 
-
 def read_sensors():
-    global peopleCount, sensor1Triggered, sensor2Triggered
+    global peopleCount, sensor_matrix
     try:
         distance1 = tof1.read()
         distance2 = tof2.read()
 
-        if distance1 < thresholdDistance:
-            if not sensor1Triggered:
-                sensor1Triggered = True
-                if sensor2Triggered:
-                    peopleCount -= 1
-                    sensor2Triggered = False  # Reset sensor 2
+        # Update matrix
+        sensor_matrix[0][0] = sensor_matrix[0][1]
+        sensor_matrix[1][0] = sensor_matrix[1][1]
+        
+        sensor_matrix[0][1] = distance1 < thresholdDistance
+        sensor_matrix[1][1] = distance2 < thresholdDistance
 
-        if distance2 < thresholdDistance:
-            if not sensor2Triggered:
-                sensor2Triggered = True
-                if sensor1Triggered:
-                    peopleCount += 1
-                    sensor1Triggered = False  # Reset sensor 1
+        # Detect people passing through
+        if sensor_matrix[0][0] == 0 and sensor_matrix[0][1] == 1:
+            if sensor_matrix[1][1] == 1:
+                peopleCount -= 1
 
-        if not (distance1 < thresholdDistance) and sensor1Triggered and not sensor2Triggered:
-            sensor1Triggered = False
-
-        if not (distance2 < thresholdDistance) and sensor2Triggered and not sensor1Triggered:
-            sensor2Triggered = False
+        if sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1:
+            if sensor_matrix[0][1] == 1:
+                peopleCount += 1
 
     except Exception as e:
         print(f"Error reading sensors: {e}")
 
-
-last_sensor_read_time = time.time()
-last_print_time = time.time()
-sensor_read_interval = 0.1  # Read sensors every 0.1 seconds
-print_interval = 5  # Print every 5 seconds
-
 while True:
-    current_time = time.time()
-
-    # Read sensors at specified intervals
-    if current_time - last_sensor_read_time >= sensor_read_interval:
-        read_sensors()
-        last_sensor_read_time = current_time
-
-    # Print sensor data and people count every 5 seconds
-    if current_time - last_print_time >= print_interval:
-        try:
-            distance1 = tof1.read()
-            distance2 = tof2.read()
-            print(f"Sensor1 Distance: {
-                  distance1}, Sensor2 Distance: {distance2}")
-            print(f"Current People Count: {peopleCount}")
-            last_print_time = current_time
-        except Exception as e:
-            print(f"Error during print: {e}")
+    read_sensors()
 
     try:
         cl, addr = s.accept()
@@ -140,5 +107,3 @@ while True:
         print(f'Error: {e}')
         if cl:
             cl.close()
-
-    time.sleep(0.1)  # Add a short delay to avoid overwhelming the loop
