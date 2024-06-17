@@ -13,15 +13,13 @@ tof2.start()
 
 # Variables
 peopleCount = 0
-thresholdDistance = 1500  # Adjust based on environment
-debounce_time = 0.179  # Debounce time in seconds based on sensor distance and average walking speed
+thresholdDistance = 1500  # Adjusted for door height
+debounce_time = 0.35  # Debounce time in seconds based on average human walking speed
 sensor_matrix = [[0, 0], [0, 0]]  # Matrix to track sensor states [Previous, Current]
 last_trigger_time = [0, 0]  # Timestamps of last trigger for each sensor
-entry_detected = False  # Flag for entry detection
-exit_detected = False  # Flag for exit detection
 
 def read_sensors():
-    global peopleCount, sensor_matrix, last_trigger_time, entry_detected, exit_detected
+    global peopleCount, sensor_matrix, last_trigger_time
     current_time = time.time()
 
     try:
@@ -29,60 +27,48 @@ def read_sensors():
         distance2 = tof2.read()
 
         # Debug output for continuous reading
-        print(f"[DEBUG] Sensor1 Distance: {distance1}, Sensor2 Distance: {distance2}")
+        print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {distance2}")
 
-        # Update matrix with debounce logic for Sensor 1
+        # Update matrix with debounce logic
         if distance1 < thresholdDistance:
             if (current_time - last_trigger_time[0]) > debounce_time:
                 sensor_matrix[0][0] = sensor_matrix[0][1]  # Previous state
                 sensor_matrix[0][1] = 1  # Current state
                 last_trigger_time[0] = current_time
-                print("[DEBUG] Sensor 1 triggered, updating state to 1")
         else:
             sensor_matrix[0][1] = 0
-            print("[DEBUG] Sensor 1 not triggered, updating state to 0")
 
-        # Update matrix with debounce logic for Sensor 2
         if distance2 < thresholdDistance:
             if (current_time - last_trigger_time[1]) > debounce_time:
                 sensor_matrix[1][0] = sensor_matrix[1][1]  # Previous state
                 sensor_matrix[1][1] = 1  # Current state
                 last_trigger_time[1] = current_time
-                print("[DEBUG] Sensor 2 triggered, updating state to 1")
         else:
             sensor_matrix[1][1] = 0
-            print("[DEBUG] Sensor 2 not triggered, updating state to 0")
 
-        # Detect entry
         if sensor_matrix[0][0] == 0 and sensor_matrix[0][1] == 1:
-            # Sensor 1 triggered first
-            if sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1 and not entry_detected:
+            if sensor_matrix[1][1] == 1:
                 peopleCount += 1
                 print("Iemand is de ruimte binnengekomen. Huidige telling:", peopleCount)
-                entry_detected = True
-                exit_detected = False  # Reset exit detection flag
+                sensor_matrix[0][0] = 0
+                sensor_matrix[0][1] = 0
+                sensor_matrix[1][0] = 0
+                sensor_matrix[1][1] = 0
 
-        # Detect exit
-        if sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1:
-            # Sensor 2 triggered first
-            if sensor_matrix[0][0] == 0 and sensor_matrix[0][1] == 1 and not exit_detected:
+        elif sensor_matrix[1][0] == 0 and sensor_matrix[1][1] == 1:
+            # Sensor 2 triggered
+            if sensor_matrix[0][1] == 1:
                 peopleCount -= 1
                 print("Iemand heeft de ruimte verlaten. Huidige telling:", peopleCount)
-                exit_detected = True
-                entry_detected = False  # Reset entry detection flag
-
-        # Reset flags and matrix if both sensors are no longer triggered
-        if sensor_matrix[0][1] == 0 and sensor_matrix[1][1] == 0:
-            entry_detected = False
-            exit_detected = False
-            sensor_matrix[0][0] = 0
-            sensor_matrix[1][0] = 0
-            print("[DEBUG] Both sensors reset")
+                # Reset matrix after counting
+                sensor_matrix[0][0] = 0
+                sensor_matrix[0][1] = 0
+                sensor_matrix[1][0] = 0
+                sensor_matrix[1][1] = 0
 
     except Exception as e:
         print(f"Error reading sensors: {e}")
 
-# Initialize sensor states to avoid initial miscounts
 def initialize_sensors():
     global sensor_matrix, last_trigger_time
     try:
@@ -92,11 +78,9 @@ def initialize_sensors():
         sensor_matrix[1][0] = sensor_matrix[1][1]
         last_trigger_time[0] = time.time()
         last_trigger_time[1] = time.time()
-        print("[DEBUG] Sensors initialized")
     except Exception as e:
         print(f"Error initializing sensors: {e}")
 
-# Initialize sensors
 initialize_sensors()
 
 # Main loop

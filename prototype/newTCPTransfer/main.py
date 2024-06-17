@@ -5,12 +5,47 @@ import ujson
 from VL53L0X import *
 import socket
 
-# Wi-Fi credentials
-SSID = 'pixel1234'
-PASSWORD = 'test1234'
+ssid = "pixel1234"
+password = "test1234"
 
-# Initialize the sensors
+def connect_wifi(SSID, PASSWORD):
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(SSID, PASSWORD)
 
+    timeout = 20  # 20 seconds timeout
+    while not wlan.isconnected() and timeout > 0:
+        time.sleep(1)
+        timeout -= 1
+        print('Connecting to Wi-Fi...')
+        print(f'Status: {wlan.status()}')  # Print the status
+
+    if wlan.isconnected():
+        print('Connected to Wi-Fi')
+        print('Network config:', wlan.ifconfig())
+        return wlan.ifconfig()[0]
+    else:
+        print('Failed to connect to Wi-Fi')
+        return None
+
+
+ip_address = connect_wifi(ssid, password)
+if ip_address:
+    print('ESP32 IP Address:', ip_address)
+else:
+    print('Failed to connect to Wi-Fi.')
+    raise Exception("Failed to connect to Wi-Fi")
+
+# Server setup to send data to the laptop
+server_ip = '192.168.156.39'
+server_port = 8080
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    sock.connect((server_ip, server_port))
+    print(f"Connected to laptop server at {server_ip}:{server_port}")
+except Exception as e:
+    print(f"Failed to connect to laptop server: {e}")
+    raise
 
 def initialize_sensor(i2c, retries=3):
     sensor = None
@@ -39,49 +74,6 @@ sensor1Triggered = False
 sensor2Triggered = False
 debounceTime = 1
 
-# Connect to Wi-Fi
-
-
-def connect_wifi(SSID, PASSWORD):
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(SSID, PASSWORD)
-
-    timeout = 20  # 20 seconds timeout
-    while not wlan.isconnected() and timeout > 0:
-        time.sleep(1)
-        timeout -= 1
-        print('Connecting to Wi-Fi...')
-        print(f'Status: {wlan.status()}')  # Print the status
-
-    if wlan.isconnected():
-        print('Connected to Wi-Fi')
-        print('Network config:', wlan.ifconfig())
-        return wlan.ifconfig()[0]
-    else:
-        print('Failed to connect to Wi-Fi')
-        return None
-
-
-ip_address = connect_wifi(SSID, PASSWORD)
-if ip_address:
-    print('ESP32 IP Address:', ip_address)
-else:
-    print('Failed to connect to Wi-Fi.')
-    raise Exception("Failed to connect to Wi-Fi")
-
-# Server setup to send data to the laptop
-server_ip = '192.168.241.39'
-server_port = 8080
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-try:
-    sock.connect((server_ip, server_port))
-    print(f"Connected to laptop server at {server_ip}:{server_port}")
-except Exception as e:
-    print(f"Failed to connect to laptop server: {e}")
-    raise
-
-
 def read_sensors():
     global peopleCount, sensor1Triggered, sensor2Triggered
     try:
@@ -94,8 +86,8 @@ def read_sensors():
         if distance1 is None or distance2 is None:
             raise ValueError("Sensor reading is None")
 
-        print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {
-              distance2}, {peopleCount}")
+        #print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {
+        #      distance2}, {peopleCount}")
 
         current_time = time.time()
 
@@ -123,11 +115,9 @@ def read_sensors():
 
         data = {'distance1': distance1,
                 'distance2': distance2, 'count': peopleCount}
-        # Add a newline character as a delimiter
         return ujson.dumps(data) + '\n'
     except Exception as e:
         print(f"Error reading sensors: {e}")
-        return ujson.dumps({'error': str(e)}) + '\n'
 
 
 last_sensor_read_time = time.time()
@@ -135,7 +125,6 @@ sensor_read_interval = 0.1  # Read sensors every 0.1 seconds
 
 while True:
     current_time = time.time()
-
     if current_time - last_sensor_read_time >= sensor_read_interval:
         sensor_data = read_sensors()
         try:
@@ -144,6 +133,8 @@ while True:
             print(f"Error sending data: {e}")
             sock.close()
             break
-        last_sensor_read_time = current_time
 
     time.sleep(0.1)
+
+
+# als peopleCountUpdated = True, send data, otherwise don't send data.
