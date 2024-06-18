@@ -29,12 +29,12 @@ header h1 {
 }
 
 .counter {
-    background-color: #f8d7da; /* Lichtrood */
+    background-color: #e35f6a; /* Lichtrood */
     border: 2px solid #00274d; /* Donkerblauw */
     border-radius: 10px;
-    padding: 20px;
+    padding: 40px; /* Vergroot padding voor grotere hokjes */
     text-align: center;
-    width: 30%;
+    width: 30%; /* Breedte blijft hetzelfde */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
 }
@@ -44,15 +44,15 @@ header h1 {
 }
 
 .icon {
-    font-size: 50px;
+    font-size: 60px; /* Vergroot de icoontjes */
 }
 
 .text h3 {
-    margin: 10px 0;
+    margin: 20px 0; /* Meer ruimte tussen de tekst */
 }
 
 .text p {
-    font-size: 30px;
+    font-size: 40px; /* Vergroot de tekst */
     margin: 0;
     font-weight: bold;
 }
@@ -66,3 +66,5 @@ footer {
     position: fixed;
     bottom: 0;
 }
+
+

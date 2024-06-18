@@ -4,38 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT-Hub Bezoekers Teller</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="https://www.it-hub.nl/wp-content/uploads/2022/03/cropped-ithub-logo-1024x417-1-192x192.png" sizes="192x192" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
     <script defer src="script.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .icon {
+            font-size: 3rem;
+        }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>IT-Hub Bezoekers Teller</h1>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+    <header class="bg-blue-900 text-white text-center py-6">
+        <a href="https://www.it-hub.nl" target="_blank">
+            <img src="https://www.it-hub.nl/wp-content/uploads/2022/03/Group-5.png" alt="IT-Hub Logo" class="mx-auto w-24 mb-4">
+        </a>
     </header>
-    <main class="container">
-        <div class="counter">
-            <div class="icon">&#128101;</div>
+    <main class="container mb-8 mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 flex-grow">
+        <div class="counter bg-red-400 border-2 border-blue-900 rounded-lg p-6 text-center shadow-lg transition-transform transform hover:scale-105">
+            <div class="icon text-blue-900 mb-4">&#128101;</div>
             <div class="text">
-                <h3>Mensen nu binnen</h3>
-                <p id="currentCount">0</p>
+                <h3 class="text-2xl font-semibold mb-4 text-blue-900">Mensen nu binnen</h3>
+                <p id="currentCount" class="text-4xl font-bold text-gray-800">0</p>
             </div>
         </div>
-        <div class="counter">
-            <div class="icon">&#128197;</div>
+        <div class="counter bg-red-400 border-2 border-blue-900 rounded-lg p-6 text-center shadow-lg transition-transform transform hover:scale-105">
+            <div class="icon text-blue-900 mb-4">&#128197;</div>
             <div class="text">
-                <h3>Mensen vandaag binnen</h3>
-                <p id="dailyCount">0</p>
+                <h3 class="text-2xl font-semibold mb-4 text-blue-900">Mensen vandaag binnen</h3>
+                <p id="dailyCount" class="text-4xl font-bold text-gray-800">0</p>
             </div>
         </div>
-        <div class="counter">
-            <div class="icon">&#128202;</div>
+        <div class="counter bg-red-400 border-2 border-blue-900 rounded-lg p-6 text-center shadow-lg transition-transform transform hover:scale-105">
+            <div class="icon text-blue-900 mb-4">&#128202;</div>
             <div class="text">
-                <h3>Totaal aantal bezoekers</h3>
-                <p id="totalCount">0</p>
+                <h3 class="text-2xl font-semibold mb-4 text-blue-900">Totaal aantal bezoekers</h3>
+                <p id="totalCount" class="text-4xl font-bold text-gray-800">0</p>
+            </div>
+        </div>
+        <div class="counter bg-red-400 border-2 border-blue-900 rounded-lg p-6 text-center shadow-lg transition-transform transform hover:scale-105">
+            <div class="icon text-blue-900 mb-4">&#128197;</div>
+            <div class="text">
+                <h3 class="text-2xl font-semibold mb-4 text-blue-900">Mensen deze maand</h3>
+                <p id="monthlyCount" class="text-4xl font-bold text-gray-800">0</p>
             </div>
         </div>
     </main>
-    <footer>
-        <p>&copy; 2024 IT-Hub</p>
+    <footer class="bg-blue-900 text-white text-center py-4">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="flex flex-col items-center mb-4 md:mb-0">
+                <img src="https://www.it-hub.nl/wp-content/uploads/2022/03/Group-5.png" alt="IT-Hub Logo" class="w-20 ml-2 mb-2">
+                <img src="https://www.it-hub.nl/wp-content/uploads/2022/03/Innovate-Accelerate-Grow.png" alt="Innovate Accelerate Grow" class="w-20 ml-2">
+            </div>
+            <div class="text-center mb-4 md:mb-0 text-sm">
+                <p>IT Hub<br>Griendtsveenweg 29<br>7901 EB Hoogeveen</p>
+                <p>info@it-hub.nl<br>+31 6 24 22 12 18</p>
+            </div>
+            <div class="text-center text-sm">
+                <p><a href="https://www.it-hub.nl/elementor-924/" class="underline">Privacyverklaring</a><br><a href="https://www.it-hub.nl/proclaimer/" class="underline">Proclaimer</a></p>
+                <div class="flex justify-center mt-2 space-x-2">
+                    <a href="https://www.instagram.com/ithubnoordnederland/" class="text-white hover:text-gray-400">
+                        <i class="fab fa-instagram fa-lg"></i>
+                    </a>
+                    <a href="https://laposta.nl/f/ssxjbowhcsxn" class="text-white hover:text-gray-400">
+                        <i class="fas fa-envelope fa-lg"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/company/ithubnoordnederland/" class="text-white hover:text-gray-400">
+                        <i class="fab fa-linkedin fa-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
     </footer>
 </body>
 </html>
