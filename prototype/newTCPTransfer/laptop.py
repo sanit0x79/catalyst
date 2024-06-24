@@ -1,7 +1,8 @@
+import os
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+import threading
 import socket
 import json
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import threading
 
 data = {
     'distance1': 0,
@@ -9,7 +10,6 @@ data = {
     'count': 0
 }
 
-# TCP server to receive data from ESP32
 def tcp_server():
     global data
     server_ip = '0.0.0.0'
@@ -38,8 +38,7 @@ def tcp_server():
                 break
         client.close()
 
-# HTTP server to serve web page
-class RequestHandler(BaseHTTPRequestHandler):
+class RequestHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/data':
             self.send_response(200)
@@ -48,8 +47,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(data).encode())
         else:
-            self.send_response(404)
-            self.end_headers()
+            if self.path == '/':
+                self.path = '/index.html'
+            super().do_GET()
 
 def run_http_server():
     http_server = HTTPServer(('0.0.0.0', 80), RequestHandler)
@@ -57,10 +57,8 @@ def run_http_server():
     http_server.serve_forever()
 
 if __name__ == '__main__':
-    # Start TCP server in a separate thread
     tcp_thread = threading.Thread(target=tcp_server)
     tcp_thread.daemon = True
     tcp_thread.start()
 
-    # Start HTTP server
     run_http_server()

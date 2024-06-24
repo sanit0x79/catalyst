@@ -36,7 +36,7 @@ else:
     raise Exception("Failed to connect to Wi-Fi")
 
 # Server setup to send data to the laptop
-server_ip = '192.168.156.39'
+server_ip = '192.168.89.39'
 server_port = 8080
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
