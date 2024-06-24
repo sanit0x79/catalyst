@@ -28,7 +28,6 @@ def connect_wifi(SSID, PASSWORD):
         print('Failed to connect to Wi-Fi')
         return None
 
-
 ip_address = connect_wifi(ssid, password)
 if ip_address:
     print('ESP32 IP Address:', ip_address)
@@ -61,21 +60,21 @@ def initialize_sensor(i2c, retries=3):
             time.sleep(1)
     return sensor
 
-
 i2c1 = I2C(scl=Pin(22), sda=Pin(21))
 tof1 = initialize_sensor(i2c1)
 
 i2c2 = I2C(scl=Pin(19), sda=Pin(18))
 tof2 = initialize_sensor(i2c2)
 
-peopleCount = 0  # Define the peopleCount variable
+peopleCount = 0
 thresholdDistance = 800
 sensor1Triggered = False
 sensor2Triggered = False
 debounceTime = 1
+peopleCountUpdated = False
 
 def read_sensors():
-    global peopleCount, sensor1Triggered, sensor2Triggered
+    global peopleCount, sensor1Triggered, sensor2Triggered, peopleCountUpdated
     try:
         if tof1 is None or tof2 is None:
             raise Exception("Sensors not initialized")
@@ -86,9 +85,6 @@ def read_sensors():
         if distance1 is None or distance2 is None:
             raise ValueError("Sensor reading is None")
 
-        #print(f"Sensor1 Distance: {distance1}, Sensor2 Distance: {
-        #      distance2}, {peopleCount}")
-
         current_time = time.time()
 
         if distance1 < thresholdDistance and not sensor1Triggered:
@@ -97,6 +93,7 @@ def read_sensors():
                 peopleCount -= 1
                 sensor2Triggered = False  # Reset sensor 2
                 print(f"Someone left the room: {peopleCount}")
+                peopleCountUpdated = True
             time.sleep(debounceTime)  # Debounce delay
 
         if distance2 < thresholdDistance and not sensor2Triggered:
@@ -105,6 +102,7 @@ def read_sensors():
                 peopleCount += 1
                 sensor1Triggered = False  # Reset sensor 1
                 print(f"Someone entered the room: {peopleCount}")
+                peopleCountUpdated = True
             time.sleep(debounceTime)  # Debounce delay
 
         if not (distance1 < thresholdDistance) and sensor1Triggered and not sensor2Triggered:
@@ -113,28 +111,32 @@ def read_sensors():
         if not (distance2 < thresholdDistance) and sensor2Triggered and not sensor1Triggered:
             sensor2Triggered = False
 
-        data = {'distance1': distance1,
-                'distance2': distance2, 'count': peopleCount}
-        return ujson.dumps(data) + '\n'
+        if peopleCountUpdated:
+            data = {
+                'distance1': distance1,
+                'distance2': distance2,
+                'count': peopleCount
+            }
+            peopleCountUpdated = False
+            return ujson.dumps(data) + '\n'
+        return None
     except Exception as e:
         print(f"Error reading sensors: {e}")
-
+        return None
 
 last_sensor_read_time = time.time()
-sensor_read_interval = 0.1  # Read sensors every 0.1 seconds
+sensor_read_interval = 0.1
 
 while True:
     current_time = time.time()
     if current_time - last_sensor_read_time >= sensor_read_interval:
         sensor_data = read_sensors()
-        try:
-            sock.send(sensor_data.encode())
-        except Exception as e:
-            print(f"Error sending data: {e}")
-            sock.close()
-            break
+        if sensor_data:
+            try:
+                sock.send(sensor_data.encode())
+            except Exception as e:
+                print(f"Error sending data: {e}")
+                sock.close()
+                break
 
     time.sleep(0.1)
-
-
-# als peopleCountUpdated = True, send data, otherwise don't send data.
