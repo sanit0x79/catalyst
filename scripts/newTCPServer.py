@@ -4,6 +4,7 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 import threading
 import socket
 import json
+from datetime import datetime
 
 data = {
     'distance1': 0,
@@ -18,45 +19,87 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS counts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            distance1 INTEGER,
-            distance2 INTEGER,
-            count INTEGER,
+            total_visitors INTEGER,
+            visitors_today INTEGER,
+            visitors_this_month INTEGER,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     conn.commit()
     conn.close()
 
-def insert_data(distance1, distance2, count):
+def reset_daily_and_monthly_counts():
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    first_day_of_month = now.strftime('%Y-%m-01')
+
+    # Reset daily count if it's a new day
     c.execute('''
-        INSERT INTO counts (distance1, distance2, count)
-        VALUES (?, ?, ?)
-    ''', (distance1, distance2, count))
+        SELECT MAX(timestamp) FROM counts
+    ''')
+    last_timestamp = c.fetchone()[0]
+    if last_timestamp and last_timestamp.split(' ')[0] < today:
+        c.execute('''
+            UPDATE counts SET visitors_today = 0 WHERE id = 1
+        ''')
+
+    # Reset monthly count if it's a new month
+    if last_timestamp and last_timestamp.split(' ')[0] < first_day_of_month:
+        c.execute('''
+            UPDATE counts SET visitors_this_month = 0 WHERE id = 1
+        ''')
+
     conn.commit()
     conn.close()
 
-def get_latest_data():
+def update_counts(count_difference):
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    first_day_of_month = now.strftime('%Y-%m-01')
+
+    c.execute('''
+        SELECT * FROM counts WHERE id = 1
+    ''')
+    row = c.fetchone()
+    if row:
+        total_visitors = row[1] + count_difference
+        visitors_today = row[2] + count_difference if row[4].split(' ')[0] == today else count_difference
+        visitors_this_month = row[3] + count_difference if row[4].split(' ')[0] >= first_day_of_month else count_difference
+
+        c.execute('''
+            UPDATE counts SET total_visitors = ?, visitors_today = ?, visitors_this_month = ?, timestamp = CURRENT_TIMESTAMP WHERE id = 1
+        ''', (total_visitors, visitors_today, visitors_this_month))
+    else:
+        c.execute('''
+            INSERT INTO counts (total_visitors, visitors_today, visitors_this_month) VALUES (?, ?, ?)
+        ''', (count_difference, count_difference, count_difference))
+
+    conn.commit()
+    conn.close()
+
+def get_counts():
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
     c.execute('''
-        SELECT distance1, distance2, count FROM counts
-        ORDER BY timestamp DESC LIMIT 1
+        SELECT total_visitors, visitors_today, visitors_this_month FROM counts WHERE id = 1
     ''')
     row = c.fetchone()
     conn.close()
     if row:
         return {
-            'distance1': row[0],
-            'distance2': row[1],
-            'count': row[2]
+            'total_visitors': row[0],
+            'visitors_today': row[1],
+            'visitors_this_month': row[2]
         }
     else:
         return {
-            'distance1': 0,
-            'distance2': 0,
-            'count': 0
+            'total_visitors': 0,
+            'visitors_today': 0,
+            'visitors_this_month': 0
         }
 
 def tcp_server():
@@ -82,7 +125,8 @@ def tcp_server():
                     line, buffer = buffer.split('\n', 1)
                     data = json.loads(line)
                     print(f"Received data: {data}")
-                    insert_data(data['distance1'], data['distance2'], data['count'])
+                    count_difference = data.get('count', 0) - data['count']
+                    update_counts(count_difference)
             except Exception as e:
                 print(f"Error receiving data: {e}")
                 break
@@ -95,8 +139,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            latest_data = get_latest_data()
-            self.wfile.write(json.dumps(latest_data).encode())
+            counts = get_counts()
+            self.wfile.write(json.dumps(counts).encode())
         else:
             if self.path == '/':
                 self.path = '/index.html'

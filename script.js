@@ -3,34 +3,27 @@ let dailyCount = 0;
 let totalCount = 0;
 let monthlyCount = 0;
 
-function resetDailyCount() {
+async function resetDailyCount() {
     dailyCount = 0;
     document.getElementById('dailyCount').innerText = dailyCount;
 }
 
-function resetMonthlyCount() {
+async function resetMonthlyCount() {
     monthlyCount = 0;
     document.getElementById('monthlyCount').innerText = monthlyCount;
 }
 
 async function updateCountsFromServer() {
     try {
-        const response = await fetch('http://192.168.89.39/data'); // Change this to the correct IP if needed
+        const response = await fetch('http://192.168.89.39/data');
         const serverData = await response.json();
 
-        if (serverData.count !== undefined) {
-            let previousCount = currentCount;
-            currentCount = serverData.count;
-
-            let countDifference = currentCount - previousCount;
-            if (countDifference > 0) {
-                dailyCount += countDifference;
-                monthlyCount += countDifference;
-                totalCount += countDifference;
-            }
+        if (serverData) {
+            dailyCount = serverData.visitors_today;
+            monthlyCount = serverData.visitors_this_month;
+            totalCount = serverData.total_visitors;
 
             // Update the HTML elements
-            document.getElementById('currentCount').innerText = currentCount;
             document.getElementById('dailyCount').innerText = dailyCount;
             document.getElementById('monthlyCount').innerText = monthlyCount;
             document.getElementById('totalCount').innerText = totalCount;
@@ -59,6 +52,4 @@ setInterval(() => {
 
 }, 1000);
 
-resetDailyCount();
-resetMonthlyCount();
 updateCountsFromServer();
