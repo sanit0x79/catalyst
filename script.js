@@ -15,7 +15,7 @@ function resetMonthlyCount() {
 
 async function updateCountsFromServer() {
     try {
-        const response = await fetch('http://192.168.89.39/data');
+        const response = await fetch('http://192.168.89.39/data'); // Change this to the correct IP if needed
         const serverData = await response.json();
 
         if (serverData.count !== undefined) {

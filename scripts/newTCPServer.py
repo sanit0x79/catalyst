@@ -37,6 +37,28 @@ def insert_data(distance1, distance2, count):
     conn.commit()
     conn.close()
 
+def get_latest_data():
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    c.execute('''
+        SELECT distance1, distance2, count FROM counts
+        ORDER BY timestamp DESC LIMIT 1
+    ''')
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return {
+            'distance1': row[0],
+            'distance2': row[1],
+            'count': row[2]
+        }
+    else:
+        return {
+            'distance1': 0,
+            'distance2': 0,
+            'count': 0
+        }
+
 def tcp_server():
     global data
     server_ip = '0.0.0.0'
@@ -73,7 +95,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(json.dumps(data).encode())
+            latest_data = get_latest_data()
+            self.wfile.write(json.dumps(latest_data).encode())
         else:
             if self.path == '/':
                 self.path = '/index.html'
