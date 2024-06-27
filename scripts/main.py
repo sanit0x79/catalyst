@@ -67,7 +67,7 @@ i2c2 = I2C(scl=Pin(19), sda=Pin(18))
 tof2 = initialize_sensor(i2c2)
 
 peopleCount = 0
-thresholdDistance = 800
+thresholdDistance = 1800
 sensor1Triggered = False
 sensor2Triggered = False
 debounceTime = 1
